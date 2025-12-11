@@ -4,594 +4,532 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wang Wei's Instagram</title>
-    
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    
     <script src="https://cdn.tailwindcss.com"></script>
-    
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
 
     <style>
         body {
-            background-color: #121212;
+            background-color: #000;
             font-family: 'Roboto', sans-serif;
             margin: 0;
             display: flex;
             justify-content: center;
-            align-items: center;
             min-height: 100vh;
         }
 
-        /* 手機容器樣式 */
+        /* 模擬手機容器 */
         #app-container {
             width: 100%;
-            max-width: 430px; /* iPhone Pro Max width approx */
+            max-width: 430px;
             height: 100vh;
-            max-height: 932px;
             background-color: #000;
             color: white;
             position: relative;
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+            border-left: 1px solid #222;
+            border-right: 1px solid #222;
         }
 
-        @media (min-width: 450px) {
-            #app-container {
-                height: 90vh;
-                border-radius: 30px;
-                border: 8px solid #333;
-            }
-        }
-
-        /* 詩詞字體 */
-        .font-poem {
-            font-family: 'Noto Serif TC', serif;
-        }
-
-        /* 水墨/宣紙濾鏡效果 */
-        .ink-filter {
-            position: relative;
-        }
-        .ink-filter::after {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.1'/%3E%3C/svg%3E");
-            pointer-events: none;
-            mix-blend-mode: overlay;
-        }
-        .ink-img {
-            filter: sepia(0.3) contrast(1.1) brightness(0.9) grayscale(0.2);
-        }
-
-        /* 圖片上下浮動動畫 */
-        @keyframes floating {
-            0% { transform: translateY(0) scale(1.05); }
-            50% { transform: translateY(-10px) scale(1.05); }
-            100% { transform: translateY(0) scale(1.05); }
-        }
-        .animate-float {
-            animation: floating 6s ease-in-out infinite;
-        }
-
-        /* 隱藏滾動條但保持滾動 */
-        .scrollbar-hide::-webkit-scrollbar {
+        /* 隱藏滾動條 */
+        .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
-        .scrollbar-hide {
+        .no-scrollbar {
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
 
-        /* Story Progress Bar */
-        .progress-bar {
+        /* 字體設定 */
+        .font-serif {
+            font-family: 'Noto Serif TC', serif;
+        }
+
+        /* 水墨質感濾鏡 */
+        .ink-texture::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.15'/%3E%3C/svg%3E");
+            pointer-events: none;
+            mix-blend-mode: overlay;
+        }
+
+        /* 圖片浮動動畫 */
+        @keyframes floating {
+            0% { transform: translateY(0) scale(1.02); }
+            50% { transform: translateY(-5px) scale(1.02); }
+            100% { transform: translateY(0) scale(1.02); }
+        }
+        .animate-float img {
+            animation: floating 6s ease-in-out infinite;
+        }
+
+        /* 限時動態進度條 */
+        .story-bar {
             transition: width 0.1s linear;
         }
     </style>
 </head>
 <body>
 
-    <div id="app">
-        <div id="app-container">
+<div id="app">
+    <div id="app-container">
+        
+        <header v-if="currentView !== 'story'" class="flex justify-between items-center p-4 bg-black border-b border-gray-800 z-20">
+            <div v-if="currentView === 'home'" class="flex items-center gap-2">
+                <h1 class="font-serif text-xl font-bold tracking-widest">WangWei_Poet</h1>
+                <span class="w-2 h-2 bg-red-500 rounded-full"></span>
+            </div>
             
-            <header v-if="currentView !== 'story'" class="px-4 py-3 flex justify-between items-center bg-black border-b border-gray-800 z-20">
-                <div v-if="currentView === 'home'" class="flex items-center gap-2">
-                    <h1 class="font-poem text-2xl font-bold tracking-widest">王維_WangWei</h1>
-                    <span class="w-2 h-2 bg-red-500 rounded-full animate-pulse" v-if="hasUnread"></span>
-                </div>
-                
-                <div v-if="currentView === 'profile'" class="font-bold text-lg flex items-center gap-1">
-                    wangwei_poet_buddha <i class="fas fa-certificate text-blue-500 text-xs"></i>
-                </div>
+            <div v-if="currentView === 'profile'" class="font-bold text-lg">wangwei_official</div>
+            <div v-if="currentView === 'dm'" class="font-bold text-lg cursor-pointer" @click="goHome">
+                <i class="fas fa-arrow-left mr-2"></i> wangwei_official
+            </div>
+            <div v-if="currentView === 'detail'" class="font-bold text-sm uppercase text-gray-400 cursor-pointer" @click="goHome">
+                <i class="fas fa-arrow-left mr-2 text-white text-lg"></i> 貼文
+            </div>
 
-                <div v-if="currentView === 'dm'" class="flex items-center gap-4">
-                    <i class="fas fa-arrow-left cursor-pointer" @click="currentView = 'home'"></i>
-                    <span class="font-bold text-lg">wangwei_poet_buddha</span>
-                </div>
+            <div class="flex gap-4 text-xl">
+                <i v-if="currentView === 'home'" class="far fa-heart hover:text-red-500 transition"></i>
+                <i v-if="currentView === 'home'" class="fab fa-facebook-messenger hover:text-blue-500 transition" @click="currentView = 'dm'"></i>
+                <i v-if="currentView === 'profile'" class="fas fa-bars"></i>
+                <i v-if="currentView === 'dm'" class="fas fa-edit"></i>
+            </div>
+        </header>
 
-                <div v-if="currentView === 'post-detail'" class="flex items-center gap-4">
-                    <i class="fas fa-arrow-left cursor-pointer" @click="currentView = 'home'"></i>
-                    <span class="font-bold text-xs text-gray-400 uppercase">Posts</span>
-                </div>
-
-                <div class="flex gap-5 text-xl">
-                    <i v-if="currentView === 'home'" class="far fa-heart cursor-pointer hover:text-red-500 transition"></i>
-                    <i v-if="currentView === 'home'" class="fab fa-facebook-messenger cursor-pointer hover:text-blue-400 transition" @click="currentView = 'dm'"></i>
-                    <i v-if="currentView === 'profile'" class="fas fa-bars cursor-pointer"></i>
-                    <i v-if="currentView === 'dm'" class="fas fa-edit cursor-pointer"></i>
-                </div>
-            </header>
-
-            <main class="flex-1 overflow-y-auto scrollbar-hide relative bg-black">
-                
-                <div v-if="currentView === 'home'">
-                    <div class="flex gap-4 p-4 border-b border-gray-800 overflow-x-auto scrollbar-hide">
-                        <div class="flex flex-col items-center gap-1 cursor-pointer" @click="openStory">
-                            <div class="w-16 h-16 rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600">
-                                <img :src="user.avatar" class="w-full h-full rounded-full object-cover border-2 border-black">
-                            </div>
-                            <span class="text-xs text-gray-300">您的限時動態</span>
+        <main class="flex-1 overflow-y-auto no-scrollbar bg-black relative">
+            
+            <div v-if="currentView === 'home'">
+                <div class="flex gap-4 p-4 border-b border-gray-800 overflow-x-auto no-scrollbar">
+                    <div class="flex flex-col items-center gap-1 cursor-pointer" @click="openStory">
+                        <div class="w-16 h-16 rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600">
+                            <img :src="user.avatar" class="w-full h-full rounded-full border-2 border-black object-cover">
                         </div>
-                        <div class="flex flex-col items-center gap-1" v-for="friend in friends" :key="friend.id">
-                            <div class="w-16 h-16 rounded-full p-[3px] bg-gray-700"> <img :src="friend.avatar" class="w-full h-full rounded-full object-cover border-2 border-black opacity-80">
-                            </div>
-                            <span class="text-xs text-gray-400">{{ friend.name }}</span>
+                        <span class="text-xs text-gray-300">限時動態</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-1 opacity-70">
+                        <div class="w-16 h-16 rounded-full p-[3px] bg-gray-700">
+                            <img src="https://images.unsplash.com/photo-1542596768-5d1d21f1cfb6?w=150&h=150&fit=crop" class="w-full h-full rounded-full border-2 border-black object-cover">
                         </div>
+                        <span class="text-xs text-gray-400">杜甫</span>
+                    </div>
+                </div>
+
+                <div v-for="post in posts" :key="post.id" class="mb-6 border-b border-gray-800 pb-4">
+                    <div class="flex items-center justify-between p-3">
+                        <div class="flex items-center gap-2">
+                            <img :src="user.avatar" class="w-8 h-8 rounded-full object-cover">
+                            <span class="font-bold text-sm">wangwei_official</span>
+                        </div>
+                        <i class="fas fa-ellipsis-h text-gray-500"></i>
+                    </div>
+                    
+                    <div class="w-full aspect-square bg-gray-900 overflow-hidden relative ink-texture cursor-pointer animate-float" @click="openPostDetail(post)">
+                        <img :src="post.image" class="w-full h-full object-cover filter brightness-90 contrast-110">
                     </div>
 
-                    <div v-for="post in posts" :key="post.id" class="mb-6 border-b border-gray-800 pb-4">
-                        <div class="flex items-center justify-between p-3">
-                            <div class="flex items-center gap-3">
-                                <img :src="user.avatar" class="w-8 h-8 rounded-full object-cover">
-                                <span class="font-bold text-sm">wangwei_poet_buddha</span>
-                            </div>
-                            <i class="fas fa-ellipsis-h text-gray-400"></i>
-                        </div>
-
-                        <div class="w-full aspect-square bg-gray-900 overflow-hidden relative ink-filter cursor-pointer" @click="openPostDetail(post)">
-                            <img :src="post.image" class="w-full h-full object-cover ink-img animate-float">
-                        </div>
-
-                        <div class="flex justify-between p-3 text-2xl">
+                    <div class="p-3">
+                        <div class="flex justify-between text-2xl mb-2">
                             <div class="flex gap-4">
-                                <i class="fa-heart cursor-pointer transition transform active:scale-125" 
-                                   :class="post.liked ? 'fas text-red-500' : 'far hover:text-gray-400'" 
-                                   @click.stop="toggleLike(post)"></i>
-                                <i class="far fa-comment cursor-pointer hover:text-gray-400" @click="openPostDetail(post)"></i>
-                                <i class="far fa-paper-plane cursor-pointer hover:text-gray-400"></i>
-                            </div>
-                            <i class="far fa-bookmark cursor-pointer hover:text-gray-400"></i>
-                        </div>
-
-                        <div class="px-3">
-                            <p class="font-bold text-sm mb-1">{{ post.likes.toLocaleString() }} 個讚</p>
-                            <div class="text-sm">
-                                <span class="font-bold mr-2">wangwei_poet_buddha</span>
-                                <span class="font-poem">{{ post.short_caption }}</span>
-                                <span class="text-gray-400 cursor-pointer" @click="openPostDetail(post)">... 更多</span>
-                            </div>
-                            <p class="text-gray-500 text-xs mt-1 uppercase">{{ post.time_ago }}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div v-if="currentView === 'profile'" class="p-4">
-                    <div class="flex items-center justify-between mb-6">
-                        <div class="w-20 h-20 rounded-full p-[2px] bg-gray-600">
-                            <img :src="user.avatar" class="w-full h-full rounded-full object-cover border-2 border-black">
-                        </div>
-                        <div class="flex gap-6 text-center mr-4">
-                            <div><div class="font-bold">256</div><div class="text-sm">貼文</div></div>
-                            <div><div class="font-bold">1231K</div><div class="text-sm">粉絲</div></div>
-                            <div><div class="font-bold">8</div><div class="text-sm">追蹤中</div></div>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <div class="font-bold">王維 Wang Wei</div>
-                        <div class="text-sm text-gray-300 whitespace-pre-line leading-relaxed">晚年唯好靜，萬事不關心。
-                            佛系生活推廣大使 🧘‍♂️
-                            📍 輞川別業 (Wangchuan Villa)
-                            <span class="text-blue-400">@dufu_official</span> 是頭號粉絲</div>
-                    </div>
-
-                    <div class="flex gap-2 mb-6">
-                        <button class="flex-1 bg-gray-800 py-1.5 rounded-lg font-bold text-sm">編輯個人檔案</button>
-                        <button class="flex-1 bg-gray-800 py-1.5 rounded-lg font-bold text-sm">分享檔案</button>
-                    </div>
-
-                    <div class="flex gap-4 mb-6 overflow-x-auto scrollbar-hide">
-                        <div class="flex flex-col items-center gap-1 w-16 flex-shrink-0">
-                            <div class="w-14 h-14 rounded-full bg-gray-800 border border-gray-600 flex items-center justify-center">🌿</div>
-                            <span class="text-xs">輞川集</span>
-                        </div>
-                        <div class="flex flex-col items-center gap-1 w-16 flex-shrink-0">
-                            <div class="w-14 h-14 rounded-full bg-gray-800 border border-gray-600 flex items-center justify-center">🖌️</div>
-                            <span class="text-xs">書畫</span>
-                        </div>
-                        <div class="flex flex-col items-center gap-1 w-16 flex-shrink-0">
-                            <div class="w-14 h-14 rounded-full bg-gray-800 border border-gray-600 flex items-center justify-center">🎵</div>
-                            <span class="text-xs">彈琴</span>
-                        </div>
-                    </div>
-
-                    <div class="flex border-t border-gray-800 text-gray-400 text-2xl mb-1">
-                        <div class="flex-1 flex justify-center py-2 border-b border-white text-white"><i class="fas fa-th"></i></div>
-                        <div class="flex-1 flex justify-center py-2"><i class="fas fa-video"></i></div>
-                        <div class="flex-1 flex justify-center py-2"><i class="fas fa-user-tag"></i></div>
-                    </div>
-                    
-                    <div class="grid grid-cols-3 gap-1">
-                        <div v-for="post in posts" :key="post.id" class="aspect-square bg-gray-800 overflow-hidden relative cursor-pointer" @click="openPostDetail(post)">
-                            <img :src="post.image" class="w-full h-full object-cover opacity-80 hover:opacity-100 transition">
-                        </div>
-                        <div class="aspect-square bg-gray-900 flex items-center justify-center text-gray-700 text-xs">竹里館</div>
-                        <div class="aspect-square bg-gray-900 flex items-center justify-center text-gray-700 text-xs">雜詩</div>
-                        <div class="aspect-square bg-gray-900 flex items-center justify-center text-gray-700 text-xs">九月九日</div>
-                    </div>
-                </div>
-
-                <div v-if="currentView === 'dm'" class="p-4">
-                    <div class="relative mb-4">
-                        <i class="fas fa-search absolute left-3 top-2.5 text-gray-500"></i>
-                        <input type="text" placeholder="搜尋" class="w-full bg-gray-800 text-white rounded-lg pl-10 py-2 outline-none focus:bg-gray-700">
-                    </div>
-                    
-                    <div class="flex justify-between mb-4">
-                        <span class="font-bold text-lg">訊息</span>
-                        <span class="text-blue-400 font-bold">要求 (99+)</span>
-                    </div>
-
-                    <div v-for="chat in dms" :key="chat.id" class="flex items-center gap-3 mb-4 cursor-pointer hover:bg-gray-900 p-2 rounded-lg transition">
-                        <div class="relative">
-                            <img :src="chat.avatar" class="w-14 h-14 rounded-full object-cover">
-                            <div v-if="chat.online" class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-black rounded-full"></div>
-                        </div>
-                        <div class="flex-1">
-                            <div class="font-bold text-white">{{ chat.name }}</div>
-                            <div class="text-gray-400 text-sm truncate" :class="chat.unread ? 'font-bold text-white' : ''">
-                                {{ chat.lastMsg }} · {{ chat.time }}
-                            </div>
-                        </div>
-                        <i v-if="chat.camera" class="fas fa-camera text-gray-500 text-xl"></i>
-                    </div>
-                </div>
-
-                <div v-if="currentView === 'post-detail'" class="pb-10">
-                    <div class="w-full h-80 bg-gray-900 relative ink-filter overflow-hidden">
-                        <img :src="activePost.image" class="w-full h-full object-cover opacity-90 animate-float">
-                        <div class="absolute bottom-0 w-full h-20 bg-gradient-to-t from-black to-transparent"></div>
-                    </div>
-
-                    <div class="p-4">
-                        <div class="flex justify-between text-2xl mb-3">
-                            <div class="flex gap-4">
-                                <i class="fa-heart cursor-pointer transition" 
-                                   :class="activePost.liked ? 'fas text-red-500' : 'far'" 
-                                   @click="toggleLike(activePost)"></i>
-                                <i class="far fa-comment"></i>
+                                <i class="far fa-heart cursor-pointer hover:text-red-500"></i>
+                                <i class="far fa-comment cursor-pointer" @click="openPostDetail(post)"></i>
                                 <i class="far fa-paper-plane"></i>
                             </div>
                             <i class="far fa-bookmark"></i>
                         </div>
-                        <div class="font-bold mb-2">{{ activePost.likes.toLocaleString() }} 個讚</div>
+                        <div class="font-bold text-sm mb-1">{{ post.likes }} 個讚</div>
+                        <div class="text-sm">
+                            <span class="font-bold mr-2">wangwei_official</span>
+                            <span class="font-serif">{{ post.mood }}</span>
+                        </div>
+                        <div class="text-gray-500 text-xs mt-1 uppercase cursor-pointer" @click="openPostDetail(post)">查看全部留言...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div v-if="currentView === 'detail'" class="pb-10">
+                <div class="w-full h-80 bg-gray-900 relative ink-texture overflow-hidden">
+                    <img :src="activePost.image" class="w-full h-full object-cover animate-float opacity-80">
+                    <div class="absolute bottom-0 w-full h-20 bg-gradient-to-t from-black to-transparent"></div>
+                </div>
+
+                <div class="p-4">
+                    <div class="flex gap-4 text-2xl mb-4">
+                        <i class="far fa-heart"></i>
+                        <i class="far fa-comment"></i>
+                        <i class="far fa-paper-plane"></i>
+                        <div class="flex-1 text-right"><i class="far fa-bookmark"></i></div>
+                    </div>
+
+                    <div class="mb-6">
+                        <h2 class="font-serif text-2xl font-bold mb-2 text-white">{{ activePost.title }}</h2>
+                        <div class="font-serif text-lg leading-loose text-gray-200 whitespace-pre-line tracking-wider pl-2 border-l-2 border-gray-600">
+                            {{ activePost.content }}
+                        </div>
                         
-                        <div class="mb-4">
-                            <h2 class="font-poem text-xl font-bold mb-1">{{ activePost.title }}</h2>
-                            <p class="font-poem text-lg leading-loose text-gray-200 whitespace-pre-line tracking-widest mt-2" v-if="!activePost.showTranslation">
-                                {{ activePost.content }}
-                            </p>
-                            <div v-else class="bg-gray-900 p-3 rounded-lg border border-gray-700 mt-2">
-                                <p class="text-gray-300 text-sm leading-relaxed">{{ activePost.translation }}</p>
-                            </div>
-                            
-                            <button @click="activePost.showTranslation = !activePost.showTranslation" 
-                                    class="mt-2 text-xs font-bold text-white bg-gray-800 px-3 py-1 rounded-full border border-gray-600 hover:bg-gray-700">
-                                <i class="fas fa-language mr-1"></i> {{ activePost.showTranslation ? '顯示原文' : '翻譯年糕' }}
+                        <div class="mt-4">
+                            <button @click="toggleTranslation" class="text-xs font-bold bg-gray-800 hover:bg-gray-700 px-3 py-1 rounded border border-gray-600 transition flex items-center gap-1">
+                                <i class="fas fa-language"></i> 翻譯年糕
                             </button>
-                        </div>
-
-                        <div class="text-gray-500 text-xs mb-4 uppercase">{{ activePost.date }}</div>
-
-                        <div class="border-t border-gray-800 pt-3">
-                            <h3 class="font-bold mb-3 text-sm">留言</h3>
-                            
-                            <div v-for="(comment, index) in activePost.comments" :key="index" class="flex gap-3 mb-4">
-                                <div class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center overflow-hidden flex-shrink-0 text-xs font-bold">
-                                    {{ comment.user.charAt(0) }}
-                                </div>
-                                <div class="flex-1">
-                                    <div class="flex items-center gap-2">
-                                        <span class="font-bold text-sm">{{ comment.user }}</span>
-                                        <i v-if="comment.verified" class="fas fa-check-circle text-blue-500 text-xs"></i>
-                                    </div>
-                                    <p class="text-sm text-gray-200 mt-0.5">{{ comment.text }}</p>
-                                    <div class="flex gap-3 mt-1 text-xs text-gray-500 font-bold">
-                                        <span>回覆</span>
-                                        <span v-if="comment.likes > 0">喜歡 ({{ comment.likes }})</span>
-                                    </div>
-                                </div>
-                                <i class="far fa-heart text-xs text-gray-500 mt-2"></i>
-                            </div>
-
-                            <div class="flex items-center gap-2 mt-4">
-                                <img :src="user.avatar" class="w-8 h-8 rounded-full">
-                                <input type="text" placeholder="留言以王維身分..." class="bg-transparent text-sm flex-1 outline-none text-white">
-                                <button class="text-blue-500 font-bold text-sm opacity-50">發佈</button>
+                            <div v-if="showTranslation" class="mt-3 bg-gray-900 p-3 rounded text-sm text-gray-300 leading-relaxed border border-gray-800">
+                                <span class="text-xs text-gray-500 block mb-1">白話文翻譯：</span>
+                                {{ activePost.translation }}
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                <div v-if="currentView === 'story'" class="absolute inset-0 z-50 bg-black flex flex-col">
-                    <div class="flex gap-1 p-2 pt-4 absolute top-0 w-full z-20">
-                        <div v-for="(story, index) in stories" :key="index" class="h-1 bg-gray-600 flex-1 rounded-full overflow-hidden">
-                            <div class="h-full bg-white progress-bar" 
-                                 :style="{ width: getStoryProgress(index) + '%' }"></div>
-                        </div>
+                        
+                        <p class="text-gray-400 text-sm mt-4 italic">
+                            💡 王維：{{ activePost.mood }}
+                        </p>
                     </div>
 
-                    <div class="absolute top-8 left-0 p-3 w-full flex justify-between items-center z-20 text-shadow">
-                        <div class="flex items-center gap-2">
-                            <img :src="user.avatar" class="w-8 h-8 rounded-full border border-white">
-                            <span class="font-bold text-sm text-white">wangwei_poet_buddha</span>
-                            <span class="text-gray-300 text-xs">{{ stories[activeStoryIndex].timeAgo }}</span>
-                        </div>
-                        <div class="flex gap-4">
-                            <i class="fas fa-ellipsis-h text-white"></i>
-                            <i class="fas fa-times text-white text-2xl cursor-pointer" @click="closeStory"></i>
-                        </div>
-                    </div>
-
-                    <div class="flex-1 relative w-full h-full ink-filter" @click="nextStory">
-                         <img :src="stories[activeStoryIndex].image" class="absolute inset-0 w-full h-full object-cover">
-                         <div class="absolute inset-0 bg-black bg-opacity-30"></div>
-                         
-                         <div class="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
-                             <div class="font-poem text-4xl font-bold mb-4 text-white drop-shadow-lg animate-pulse">
-                                 {{ stories[activeStoryIndex].text }}
-                             </div>
-                             
-                             <div v-if="stories[activeStoryIndex].interactive" class="mt-10 bg-white text-black rounded-lg p-4 w-64 shadow-2xl transform rotate-2">
-                                <div class="font-bold text-sm mb-2 text-center text-gray-500">向我提問</div>
-                                <div class="text-xl font-bold text-center">今天要不要去山上？</div>
-                                <div class="mt-2 flex bg-gray-200 rounded-full">
-                                    <div class="flex-1 text-center py-1 text-2xl border-r border-white">🤩</div>
-                                    <div class="flex-1 text-center py-1 text-2xl">😴</div>
+                    <div class="border-t border-gray-800 pt-4">
+                        <h3 class="font-bold text-sm mb-4">留言區</h3>
+                        <div v-for="(comment, idx) in activePost.comments" :key="idx" class="flex gap-3 mb-4 items-start">
+                            <div class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-xs font-bold overflow-hidden flex-shrink-0">
+                                <span v-if="!comment.avatar">{{ comment.user.charAt(0) }}</span>
+                                <img v-else :src="comment.avatar" class="w-full h-full object-cover">
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-center gap-1">
+                                    <span class="font-bold text-sm">{{ comment.user }}</span>
+                                    <i v-if="comment.verified" class="fas fa-check-circle text-blue-500 text-[10px]"></i>
                                 </div>
-                             </div>
-
-                             <div v-if="stories[activeStoryIndex].music" class="absolute top-1/2 mt-32 bg-black bg-opacity-60 px-4 py-2 rounded-full flex items-center gap-2 border border-white/20 backdrop-blur-sm">
-                                <i class="fas fa-music text-green-400"></i>
-                                <span class="text-xs">古琴 - 陽關三疊 (Remix)</span>
-                             </div>
-                         </div>
+                                <div class="text-sm text-gray-200 mt-0.5 leading-tight">{{ comment.text }}</div>
+                                <div class="flex gap-3 mt-1.5 text-xs text-gray-500 font-bold">
+                                    <span>回覆</span>
+                                    <span>讚</span>
+                                </div>
+                            </div>
+                            <i class="far fa-heart text-xs text-gray-500 mt-2"></i>
+                        </div>
                     </div>
+                </div>
+            </div>
 
-                    <div class="absolute bottom-0 w-full p-4 flex items-center gap-3 bg-gradient-to-t from-black to-transparent z-20">
-                        <input type="text" placeholder="發送訊息..." class="bg-transparent border border-gray-500 rounded-full px-4 py-2 text-white flex-1 placeholder-gray-300 text-sm">
-                        <i class="far fa-heart text-2xl text-white"></i>
-                        <i class="far fa-paper-plane text-2xl text-white"></i>
+            <div v-if="currentView === 'profile'" class="p-4">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="w-24 h-24 rounded-full p-[2px] bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600">
+                        <img :src="user.avatar" class="w-full h-full rounded-full border-4 border-black object-cover">
                     </div>
-
-                    <div class="absolute inset-y-0 left-0 w-1/4 z-10" @click.stop="prevStory"></div>
+                    <div class="flex gap-6 text-center mr-2">
+                        <div><div class="font-bold text-lg">256</div><div class="text-sm text-gray-400">貼文</div></div>
+                        <div><div class="font-bold text-lg">1231K</div><div class="text-sm text-gray-400">粉絲</div></div>
+                        <div><div class="font-bold text-lg">8</div><div class="text-sm text-gray-400">追蹤中</div></div>
+                    </div>
                 </div>
-
-            </main>
-
-            <footer v-if="currentView !== 'story'" class="px-6 py-3 bg-black border-t border-gray-800 flex justify-between items-center text-2xl z-20">
-                <i class="fas fa-home cursor-pointer transition" :class="currentView === 'home' ? 'text-white' : 'text-gray-500'" @click="currentView = 'home'"></i>
-                <i class="fas fa-search text-gray-500 cursor-pointer"></i>
-                <i class="far fa-plus-square text-gray-500 cursor-pointer text-3xl"></i>
-                <i class="fab fa-youtube text-gray-500 cursor-pointer"></i> <div @click="currentView = 'profile'" class="cursor-pointer border-2 rounded-full p-[1px]" :class="currentView === 'profile' ? 'border-white' : 'border-transparent'">
-                    <img :src="user.avatar" class="w-6 h-6 rounded-full">
-                </div>
-            </footer>
-
-        </div>
-    </div>
-
-    <script>
-        const { createApp, ref, onMounted, onUnmounted } = Vue;
-
-        createApp({
-            setup() {
-                const currentView = ref('home');
-                const hasUnread = ref(true);
                 
-                // Mock Images (Using reliable nature placeholders suitable for Wang Wei)
-                // Note: Using standard placeholders because specific Unsplash IDs can expire.
-                const imgs = {
-                    avatar: 'https://images.unsplash.com/photo-1525127620701-d0092d6e3860?w=150&h=150&fit=crop', // Ink/Art style
-                    post1: 'https://images.unsplash.com/photo-1517056023301-44331e5d76d6?w=500&h=500&fit=crop', // Moon/Night
-                    post2: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=500&h=500&fit=crop', // Forest/Light
-                    post3: 'https://images.unsplash.com/photo-1508614561726-262dbfae3650?w=500&h=500&fit=crop', // Red/Berries
-                    story1: 'https://images.unsplash.com/photo-1519999482648-25049ddd37b1?w=400&h=800&fit=crop',
-                    story2: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400&h=800&fit=crop',
-                    dufu: 'https://randomuser.me/api/portraits/men/32.jpg',
-                    peidi: 'https://randomuser.me/api/portraits/men/45.jpg',
-                    libai: 'https://randomuser.me/api/portraits/men/11.jpg'
-                };
+                <div class="mb-6">
+                    <div class="font-bold text-lg">王維 Wang Wei</div>
+                    <div class="text-sm text-gray-300 whitespace-pre-line leading-relaxed mt-1">
+                        晚年唯好靜，萬事不關心。
+                        佛系生活推廣大使 🧘‍♂️
+                        📍 輞川別業 (Wangchuan Villa)
+                        <span class="text-blue-400">@dufu_official</span> 是頭號粉絲
+                    </div>
+                </div>
 
-                const user = ref({
-                    name: '王維 Wang Wei',
-                    handle: 'wangwei_poet_buddha',
-                    avatar: imgs.avatar
-                });
+                <div class="flex gap-4 mb-6 overflow-x-auto no-scrollbar pb-2">
+                    <div v-for="hl in highlights" :key="hl" class="flex flex-col items-center gap-1 w-16 flex-shrink-0">
+                        <div class="w-16 h-16 rounded-full bg-gray-800 border border-gray-600 flex items-center justify-center text-xl">
+                            {{ hl.icon }}
+                        </div>
+                        <span class="text-xs">{{ hl.name }}</span>
+                    </div>
+                </div>
 
-                // Stories Data
-                const stories = ref([
-                    { id: 1, image: imgs.avatar, text: '自我介紹，剛創IG，多多關照 🙏', timeAgo: '23小時', interactive: false },
-                    { id: 2, image: imgs.story1, text: '雲溪打卡 ☁️', timeAgo: '12小時', interactive: true },
-                    { id: 3, image: imgs.story2, text: '想退休... #佛系', timeAgo: '2小時', music: true },
-                    { id: 4, image: imgs.post1, text: '詩佛 Mode On', timeAgo: '剛剛', interactive: false }
-                ]);
-                const activeStoryIndex = ref(0);
-                const storyProgress = ref(0);
-                let storyTimer = null;
+                <div class="flex border-t border-gray-800 text-gray-400 text-2xl mb-1">
+                    <div class="flex-1 flex justify-center py-2 border-b border-white text-white"><i class="fas fa-th"></i></div>
+                    <div class="flex-1 flex justify-center py-2"><i class="fas fa-video"></i></div>
+                    <div class="flex-1 flex justify-center py-2"><i class="fas fa-user-tag"></i></div>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-0.5">
+                    <div v-for="post in posts" :key="post.id" class="aspect-square bg-gray-800 relative cursor-pointer" @click="openPostDetail(post)">
+                        <img :src="post.image" class="w-full h-full object-cover">
+                    </div>
+                    <div class="aspect-square bg-gray-900"></div>
+                    <div class="aspect-square bg-gray-900"></div>
+                    <div class="aspect-square bg-gray-900"></div>
+                    <div class="aspect-square bg-gray-900"></div>
+                    <div class="aspect-square bg-gray-900"></div>
+                    <div class="aspect-square bg-gray-900"></div>
+                </div>
+            </div>
 
-                // Friends for Story bar
-                const friends = ref([
-                    { id: 1, name: '杜甫_DuFu', avatar: imgs.dufu },
-                    { id: 2, name: '裴迪_Pei', avatar: imgs.peidi },
-                    { id: 3, name: '李白_LiBai', avatar: imgs.libai },
-                    { id: 4, name: '孟浩然', avatar: 'https://randomuser.me/api/portraits/men/88.jpg' },
-                ]);
+            <div v-if="currentView === 'dm'" class="p-4">
+                <div class="relative mb-6">
+                    <i class="fas fa-search absolute left-3 top-3 text-gray-500"></i>
+                    <input type="text" placeholder="搜尋" class="w-full bg-gray-800 text-white rounded-lg pl-10 py-2 outline-none focus:bg-gray-700 transition">
+                </div>
+                
+                <div class="flex justify-between mb-4 px-1">
+                    <span class="font-bold text-lg">訊息</span>
+                    <span class="text-blue-500 font-bold text-sm">要求 (99+)</span>
+                </div>
 
-                // Posts Data
-                const posts = ref([
-                    {
-                        id: 1,
-                        title: '鳥鳴澗',
-                        content: '人閒桂花落，夜靜春山空。\n月出驚山鳥，時鳴春澗中。',
-                        translation: '【翻譯】\n在寂靜無人的山谷中，只有桂花無聲地飄落。\n夜色寧靜，春山顯得格外空靈。\n明月升起，驚動了棲息的山鳥。\n它們不時地在春天的溪澗中鳴叫。',
-                        image: imgs.post1,
-                        short_caption: '人閒桂花落... 🌸',
-                        likes: 5200,
-                        time_ago: '2 天前',
-                        date: '741年 4月 15日',
-                        liked: false,
-                        showTranslation: false,
-                        comments: [
-                            { user: '杜甫_DuFu', text: '摩詰兄這意境太美了！已按讚！❤️', verified: true, likes: 105 },
-                            { user: '李白_LiBai', text: '只有花落？沒有酒嗎？🍷', verified: true, likes: 88 },
-                            { user: 'Elon Musk', text: '這座山賣嗎？我想在這裡蓋發射基地。🚀', verified: true, likes: 420 },
-                            { user: '柏威', text: '雲溪別墅稀有釋出，意者私訊！🏡', verified: false, likes: 2 },
-                            { user: '承宥', text: '我要我要！全款拿下，so easy啦~~~', verified: false, likes: 5 }
-                        ]
-                    },
-                    {
-                        id: 2,
-                        title: '鹿柴',
-                        content: '空山不見人，但聞人語響。\n返景入深林，復照青苔上。',
-                        translation: '【翻譯】\n空寂的山中看不見人影，\n只聽得見人說話的聲音。\n落日的餘暉射入深林中，\n又照映在幽暗的青苔上。',
-                        image: imgs.post2,
-                        short_caption: '空山不見人... 🌲',
-                        likes: 3340,
-                        time_ago: '5 天前',
-                        date: '741年 4月 12日',
-                        liked: true,
-                        showTranslation: false,
-                        comments: [
-                            { user: '裴迪_Pei', text: '這不是我們上次迷路的地方嗎？', verified: true, likes: 50 },
-                            { user: '陶淵明_Official', text: '這裡不錯，適合種菊花。🌼', verified: true, likes: 200 },
-                            { user: 'Jay Chou', text: '哎唷，這光影不錯喔，適合拍MV。🎸', verified: true, likes: 999 }
-                        ]
-                    },
-                    {
-                        id: 3,
-                        title: '相思',
-                        content: '紅豆生南國，春來發幾枝。\n願君多采擷，此物最相思。',
-                        translation: '【翻譯】\n紅豆生長在南國，\n春天來了，不知長出了多少新枝？\n希望你多採摘一些，\n因為它最能寄託相思之情。',
-                        image: imgs.post3,
-                        short_caption: '紅豆生南國... 🔴',
-                        likes: 8888,
-                        time_ago: '1 週前',
-                        date: '741年 4月 1日',
-                        liked: false,
-                        showTranslation: false,
-                        comments: [
-                            { user: '李龜年_Singer', text: '這首歌我唱了一萬遍了，版權費什麼時候結一下？🎤', verified: true, likes: 300 },
-                            { user: '林黛玉', text: '滴不盡相思血淚拋紅豆...😭', verified: false, likes: 150 },
-                            { user: '欣蓉', text: '南國紅豆現正特價中，買一送一，連結在主頁！🛒', verified: false, likes: 1 },
-                            { user: '承熙', text: '紅豆！紅豆泥? 😲', verified: false, likes: 12 }
-                        ]
-                    }
-                ]);
+                <div v-for="chat in dms" :key="chat.id" @click="handleDMClick(chat)" class="flex items-center gap-4 mb-5 cursor-pointer hover:bg-gray-900 p-2 -mx-2 rounded transition">
+                    <div class="relative">
+                        <img :src="chat.avatar" class="w-14 h-14 rounded-full object-cover">
+                        <div v-if="chat.online" class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-black rounded-full"></div>
+                    </div>
+                    <div class="flex-1">
+                        <div class="font-bold text-white">{{ chat.name }}</div>
+                        <div class="text-gray-400 text-sm truncate" :class="chat.unread ? 'text-white font-bold' : ''">
+                            {{ chat.lastMsg }} · {{ chat.time }}
+                        </div>
+                    </div>
+                    <i class="fas fa-camera text-gray-500 text-xl"></i>
+                </div>
+            </div>
 
-                // DM Data
-                const dms = ref([
-                    { id: 1, name: '杜甫_DuFu', avatar: imgs.dufu, lastMsg: '摩詰兄！您的新詩太神了，請問什麼時候有空...', time: '剛剛', unread: true, online: true, camera: true },
-                    { id: 2, name: '裴迪_Pei', avatar: imgs.peidi, lastMsg: '上次那瓶酒還沒喝完', time: '2小時前', unread: false, online: false, camera: false },
-                    { id: 3, name: '李白_LiBai', avatar: imgs.libai, lastMsg: '不在服務區 / 喝醉中 🍶', time: '昨天', unread: false, online: false, camera: false },
-                ]);
+            <div v-if="currentView === 'story'" class="absolute inset-0 z-50 bg-black flex flex-col">
+                <div class="flex gap-1 p-2 pt-4 absolute top-0 w-full z-20">
+                    <div v-for="(story, index) in stories" :key="index" class="h-0.5 bg-gray-600 flex-1 rounded-full overflow-hidden">
+                        <div class="h-full bg-white story-bar" 
+                             :style="{ width: getStoryProgress(index) + '%' }"></div>
+                    </div>
+                </div>
 
-                const activePost = ref(posts.value[0]);
+                <div class="absolute top-8 left-0 p-3 w-full flex justify-between items-center z-20">
+                    <div class="flex items-center gap-2">
+                        <img :src="user.avatar" class="w-8 h-8 rounded-full border border-white">
+                        <span class="font-bold text-sm text-white drop-shadow-md">wangwei_official</span>
+                        <span class="text-gray-300 text-xs drop-shadow-md">2小時前</span>
+                    </div>
+                    <div class="flex gap-4 items-center">
+                        <i class="fas fa-ellipsis-h text-white drop-shadow-md"></i>
+                        <i class="fas fa-times text-white text-2xl cursor-pointer drop-shadow-md" @click="closeStory"></i>
+                    </div>
+                </div>
 
-                // Methods
-                const openPostDetail = (post) => {
-                    activePost.value = post;
-                    currentView.value = 'post-detail';
-                };
+                <div class="flex-1 relative w-full h-full ink-texture" @click="nextStory">
+                     <img :src="stories[activeStoryIndex].image" class="absolute inset-0 w-full h-full object-cover">
+                     <div class="absolute inset-0 bg-black bg-opacity-20"></div>
+                     
+                     <div class="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
+                         <div v-if="stories[activeStoryIndex].type === 'selfie'" class="bg-black/50 p-4 rounded-xl backdrop-blur-sm border border-white/20">
+                             <p class="font-bold text-xl mb-2">大家好我是王維 👋</p>
+                             <p class="text-sm">剛辦IG可以追蹤我喔！#OOTD #GreenRobes</p>
+                         </div>
+                         
+                         <div v-if="stories[activeStoryIndex].type === 'scenery'" class="font-serif text-3xl font-bold text-white drop-shadow-lg tracking-widest vertical-rl">
+                             雲溪打卡 🌕
+                         </div>
+                     </div>
+                </div>
 
-                const toggleLike = (post) => {
-                    post.liked = !post.liked;
-                    post.likes += post.liked ? 1 : -1;
-                };
+                <div class="absolute bottom-0 w-full p-4 flex items-center gap-3 z-20 bg-gradient-to-t from-black/80 to-transparent pt-10">
+                    <input type="text" placeholder="傳送訊息..." class="bg-transparent border border-gray-400 rounded-full px-4 py-2 text-white flex-1 placeholder-gray-300 text-sm">
+                    <i class="far fa-heart text-2xl text-white"></i>
+                    <i class="far fa-paper-plane text-2xl text-white"></i>
+                </div>
+            </div>
 
-                // Story Logic
-                const openStory = () => {
-                    currentView.value = 'story';
-                    activeStoryIndex.value = 0;
+        </main>
+
+        <footer v-if="currentView !== 'story'" class="px-6 py-3 bg-black border-t border-gray-800 flex justify-between items-center text-2xl z-20">
+            <i class="fas fa-home cursor-pointer transition" :class="currentView === 'home' ? 'text-white' : 'text-gray-500'" @click="goHome"></i>
+            <i class="fas fa-search text-gray-500 cursor-pointer"></i>
+            <i class="far fa-plus-square text-gray-500 cursor-pointer text-3xl"></i>
+            <i class="fab fa-youtube text-gray-500 cursor-pointer"></i>
+            <div @click="currentView = 'profile'" class="cursor-pointer border rounded-full p-[1px]" :class="currentView === 'profile' ? 'border-white' : 'border-transparent'">
+                <img :src="user.avatar" class="w-6 h-6 rounded-full object-cover">
+            </div>
+        </footer>
+
+    </div>
+</div>
+
+<script>
+    const { createApp, ref, computed } = Vue;
+
+    createApp({
+        setup() {
+            const currentView = ref('home');
+            const showTranslation = ref(false);
+            
+            // 圖片資源 (Unsplash / Placeholders)
+            const imgs = {
+                avatar: 'https://images.unsplash.com/photo-1531988042231-d39a9cc12a9a?w=150&h=150&fit=crop', // 古風男子
+                post1: 'https://images.unsplash.com/photo-1476610182048-b716b8518aae?w=500&h=500&fit=crop', // 山月
+                post2: 'https://images.unsplash.com/photo-1518066000714-58c45f1a2c0a?w=500&h=500&fit=crop', // 森林光影
+                post3: 'https://images.unsplash.com/photo-1528821128474-27f963b0bddb?w=500&h=500&fit=crop', // 紅色植物
+                storySelfie: 'https://images.unsplash.com/photo-1504194921103-f8b80cadd5e4?w=400&h=800&fit=crop&q=80', // 綠衣意象
+                storyScenery: 'https://images.unsplash.com/photo-1500375592092-40eb2168fd21?w=400&h=800&fit=crop&q=80', // 雲溪
+                dufu: 'https://randomuser.me/api/portraits/men/32.jpg',
+                libai: 'https://randomuser.me/api/portraits/men/11.jpg',
+                peidi: 'https://randomuser.me/api/portraits/men/45.jpg',
+            };
+
+            const user = ref({
+                avatar: imgs.avatar,
+                name: 'Wang Wei'
+            });
+
+            // 精選動態
+            const highlights = ref([
+                { name: '旅遊', icon: '⛰️' },
+                { name: '詩作源起', icon: '📜' },
+                { name: '友情', icon: '🍶' },
+                { name: '輞川', icon: '🏡' }
+            ]);
+
+            // 貼文數據
+            const posts = ref([
+                {
+                    id: 1,
+                    title: '鳥鳴澗',
+                    content: '人閒桂花落，夜靜春山空。\n月出驚山鳥，時鳴春澗中。',
+                    translation: '在寂靜無人的山谷中，只有桂花無聲地飄落。夜色寧靜，春山顯得格外空靈。明月升起，驚動了棲息的山鳥。它們不時地在春天的溪澗中鳴叫。',
+                    mood: '今晚雲溪別墅很安靜，只有桂花落下的聲音。 #春山 #月亮',
+                    image: imgs.post1,
+                    likes: '5,200',
+                    comments: [
+                        { user: '杜甫_DuFu', text: '摩詰兄這意境太美了！已按讚！❤️', verified: true },
+                        { user: '李白_LiBai', text: '只有花落？沒有酒嗎？🍷', verified: true },
+                        { user: 'Elon Musk', text: '這座山賣嗎？我想在這裡蓋發射基地。🚀', verified: true },
+                        { user: '柏威', text: '雲溪別墅稀有釋出，意者私訊！🏡', verified: false },
+                        { user: '承宥', text: '我要我要！全款拿下，so easy啦~~~', verified: false }
+                    ]
+                },
+                {
+                    id: 2,
+                    title: '鹿柴',
+                    content: '空山不見人，但聞人語響。\n返景入深林，復照青苔上。',
+                    translation: '空寂的山中看不見人影，只聽得見人說話的聲音。落日的餘暉射入深林中，又照映在幽暗的青苔上。',
+                    mood: '即使看不見人，也能感受到存在的痕跡。这就是禪意吧。 🌲',
+                    image: imgs.post2,
+                    likes: '3,340',
+                    comments: [
+                        { user: '裴迪_Pei', text: '這不是我們上次迷路的地方嗎？', verified: true },
+                        { user: '陶淵明', text: '這裡不錯，適合種菊花。🌼', verified: true },
+                        { user: 'Jay Chou', text: '哎唷，這光影不錯喔，適合拍MV。🎸', verified: true }
+                    ]
+                },
+                {
+                    id: 3,
+                    title: '相思',
+                    content: '紅豆生南國，春來發幾枝。\n願君多采擷，此物最相思。',
+                    translation: '紅豆生長在南國，春天來了，不知長出了多少新枝？希望你多採摘一些，因為它最能寄託相思之情。',
+                    mood: '看到紅豆就想起了遠方的朋友。 ❤️',
+                    image: imgs.post3,
+                    likes: '8,888',
+                    comments: [
+                        { user: '李龜年', text: '這首歌我唱了一萬遍了，版權費什麼時候結一下？🎤', verified: true },
+                        { user: '林黛玉', text: '滴不盡相思血淚拋紅豆...😭', verified: false },
+                        { user: '欣蓉', text: '南國紅豆現正特價中，買一送一，連結在主頁！🛒', verified: false },
+                        { user: '承熙', text: '紅豆！紅豆泥? 😲', verified: false }
+                    ]
+                }
+            ]);
+
+            const activePost = ref(posts.value[0]);
+
+            // 私訊數據
+            const dms = ref([
+                { id: 1, name: '杜甫_DuFu', avatar: imgs.dufu, lastMsg: '摩詰兄！您的新詩太神了...', time: '剛剛', unread: true, online: true },
+                { id: 2, name: '裴迪_Pei', avatar: imgs.peidi, lastMsg: '上次那瓶酒還沒喝完', time: '2h', unread: false, online: false },
+                { id: 3, name: '李白_LiBai', avatar: imgs.libai, lastMsg: '不在服務區 / 喝醉中 🍶', time: '1d', unread: false, online: false },
+            ]);
+
+            // 限動數據
+            const stories = ref([
+                { type: 'selfie', image: imgs.storySelfie },
+                { type: 'scenery', image: imgs.storyScenery }
+            ]);
+            const activeStoryIndex = ref(0);
+            const storyProgress = ref(0);
+            let storyTimer = null;
+
+            // 方法
+            const goHome = () => {
+                currentView.value = 'home';
+                showTranslation.value = false;
+            };
+
+            const openPostDetail = (post) => {
+                activePost.value = post;
+                currentView.value = 'detail';
+                showTranslation.value = false;
+            };
+
+            const toggleTranslation = () => {
+                showTranslation.value = !showTranslation.value;
+            };
+
+            const handleDMClick = (chat) => {
+                if (chat.name.includes('李白')) {
+                    alert('🔒 此帳號為私密帳號 (李白可能喝醉了，暫時無法回覆)');
+                } else {
+                    alert(`進入與 ${chat.name} 的聊天室 (功能開發中)`);
+                }
+            };
+
+            // Story Logic
+            const openStory = () => {
+                currentView.value = 'story';
+                activeStoryIndex.value = 0;
+                storyProgress.value = 0;
+                startStoryTimer();
+            };
+
+            const closeStory = () => {
+                clearInterval(storyTimer);
+                currentView.value = 'home';
+            };
+
+            const nextStory = () => {
+                if (activeStoryIndex.value < stories.value.length - 1) {
+                    activeStoryIndex.value++;
                     storyProgress.value = 0;
-                    startStoryTimer();
-                };
+                } else {
+                    closeStory();
+                }
+            };
 
-                const closeStory = () => {
-                    clearInterval(storyTimer);
-                    currentView.value = 'home';
-                };
-
-                const nextStory = () => {
-                    if (activeStoryIndex.value < stories.value.length - 1) {
-                        activeStoryIndex.value++;
-                        storyProgress.value = 0;
+            const startStoryTimer = () => {
+                clearInterval(storyTimer);
+                storyTimer = setInterval(() => {
+                    if (storyProgress.value < 100) {
+                        storyProgress.value += 1;
                     } else {
-                        closeStory();
+                        nextStory();
                     }
-                };
+                }, 50); // 5秒一則
+            };
 
-                const prevStory = () => {
-                    if (activeStoryIndex.value > 0) {
-                        activeStoryIndex.value--;
-                        storyProgress.value = 0;
-                    }
-                };
+            const getStoryProgress = (index) => {
+                if (index < activeStoryIndex.value) return 100;
+                if (index > activeStoryIndex.value) return 0;
+                return storyProgress.value;
+            };
 
-                const getStoryProgress = (index) => {
-                    if (index < activeStoryIndex.value) return 100;
-                    if (index > activeStoryIndex.value) return 0;
-                    return storyProgress.value;
-                };
+            return {
+                currentView,
+                user,
+                highlights,
+                posts,
+                activePost,
+                dms,
+                stories,
+                activeStoryIndex,
+                showTranslation,
+                goHome,
+                openPostDetail,
+                toggleTranslation,
+                handleDMClick,
+                openStory,
+                closeStory,
+                nextStory,
+                getStoryProgress
+            };
+        }
+    }).mount('#app');
+</script>
 
-                const startStoryTimer = () => {
-                    clearInterval(storyTimer);
-                    storyTimer = setInterval(() => {
-                        if (storyProgress.value < 100) {
-                            storyProgress.value += 1; // Speed of story
-                        } else {
-                            nextStory();
-                        }
-                    }, 50); // 50ms * 100 = 5000ms = 5s per story
-                };
-
-                return {
-                    currentView,
-                    user,
-                    posts,
-                    stories,
-                    friends,
-                    dms,
-                    activePost,
-                    activeStoryIndex,
-                    hasUnread,
-                    openPostDetail,
-                    toggleLike,
-                    openStory,
-                    closeStory,
-                    nextStory,
-                    prevStory,
-                    getStoryProgress
-                };
-            }
-        }).mount('#app');
-    </script>
 </body>
 </html>
