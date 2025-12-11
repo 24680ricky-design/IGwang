@@ -1,0 +1,49 @@
+/* 隱藏捲軸但保留功能 */
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* 淡入動畫 */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+.animate-fadeIn {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* 從右側滑入動畫 */
+@keyframes slideInRight {
+    from { transform: translateX(20px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+.animate-slideInRight {
+    animation: slideInRight 0.2s ease-out;
+}
+
+/* 進度條動畫 */
+@keyframes progress {
+    0% { width: 0%; }
+    100% { width: 100%; }
+}
+.animate-progress {
+    animation: progress 5s linear forwards;
+}
+
+/* 直排文字 */
+.writing-vertical-rl {
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+}
+
+/* 圖片微微上下浮動 (Gentle Bounce) */
+@keyframes gentle-bounce {
+    0%, 100% { transform: translateY(0) scale(1.1); }
+    50% { transform: translateY(-10px) scale(1.1); }
+}
+.animate-gentle-bounce {
+    animation: gentle-bounce 10s ease-in-out infinite;
